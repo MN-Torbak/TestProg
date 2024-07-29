@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -67,7 +68,11 @@ fun MainScreen(testProgViewModel: TestProgViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.size(30.dp))
 
-        StartStopRow()
+        StartStopRow(testProgViewModel)
+
+        Spacer(modifier = Modifier.size(30.dp))
+
+        MessageRow(message = testProgViewModel.gameState.collectAsState().value.message)
     }
 }
 
@@ -99,7 +104,7 @@ private fun NumbersRow(testProgViewModel: TestProgViewModel) {
 @Composable
 private fun TextButtonNumber(testProgViewModel: TestProgViewModel, number: Int) {
     TextButton(
-        onClick = { /*testProgViewModel.clickButtonNumber(number)*/},
+        onClick = { testProgViewModel.clickButtonNumber(number) },
         border = BorderStroke(1.dp, Color.Black),
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
@@ -109,27 +114,36 @@ private fun TextButtonNumber(testProgViewModel: TestProgViewModel, number: Int) 
 }
 
 @Composable
-private fun StartStopRow() {
+private fun StartStopRow(testProgViewModel: TestProgViewModel) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
+        val start = "Start"
+        val stop = "Stop"
         TextButton(
-            onClick = { },
+            onClick = { testProgViewModel.clickStartStopButton(start) },
             border = BorderStroke(1.dp, Color.Black),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
         ) {
-            Text("Start")
+            Text(start)
         }
         TextButton(
-            onClick = { },
+            onClick = { testProgViewModel.clickStartStopButton(stop) },
             border = BorderStroke(1.dp, Color.Black),
             shape = RoundedCornerShape(50),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Black)
         ) {
-            Text("Stop")
+            Text(stop)
         }
+    }
+}
+
+@Composable
+private fun MessageRow(message: String) {
+    Row() {
+        Text(message)
     }
 }
 
