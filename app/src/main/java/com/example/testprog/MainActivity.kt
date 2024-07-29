@@ -25,13 +25,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.testprog.ui.theme.TestProgTheme
 import com.example.testprog.viewmodel.TestProgViewModel
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +72,7 @@ fun MainScreen(testProgViewModel: TestProgViewModel = viewModel()) {
 
         Spacer(modifier = Modifier.size(30.dp))
 
-        MessageRow(message = testProgViewModel.gameState.collectAsState().value.message)
+        MessageRow(testProgViewModel.gameState.collectAsState().value)
     }
 }
 
@@ -141,9 +141,26 @@ private fun StartStopRow(testProgViewModel: TestProgViewModel) {
 }
 
 @Composable
-private fun MessageRow(message: String) {
-    Row() {
-        Text(message)
+private fun MessageRow(gameState: TestProgViewModel.GameState) {
+    Row {
+        if (gameState.message == TestProgViewModel.Message.SpecialMessage) {
+            Text(stringResource(getResourcesFromMessage(gameState.message)).format(gameState.numberGenerated))
+        } else {
+            Text(stringResource(getResourcesFromMessage(gameState.message)))
+        }
+    }
+}
+
+private fun getResourcesFromMessage(message: TestProgViewModel.Message): Int {
+    return when (message) {
+        TestProgViewModel.Message.StartPressed -> R.string.StartPressed
+        TestProgViewModel.Message.StopPressed -> R.string.StopPressed
+        TestProgViewModel.Message.ButtonOnePressed -> R.string.ButtonOnePressed
+        TestProgViewModel.Message.ButtonTwoPressed -> R.string.ButtonTwoPressed
+        TestProgViewModel.Message.ButtonThreePressed -> R.string.ButtonThreePressed
+        TestProgViewModel.Message.Error -> R.string.Error
+        TestProgViewModel.Message.WellPlayed -> R.string.WellPlayed
+        TestProgViewModel.Message.SpecialMessage -> R.string.SpecialMessage
     }
 }
 

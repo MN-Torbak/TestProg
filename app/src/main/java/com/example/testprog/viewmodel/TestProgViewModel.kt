@@ -29,7 +29,7 @@ class TestProgViewModel : ViewModel() {
     private fun countdown(duration: Int) {
         _gameState.update { currentState ->
             currentState.copy(
-                numberGenerated = UseCase.generateRandomNumberBetweenOneAndThree(),
+                numberGenerated = UseCase().generateRandomNumber(1,3),
             )
         }
         time = Duration.ZERO
@@ -41,7 +41,7 @@ class TestProgViewModel : ViewModel() {
                 stop()
                 _gameState.update { currentState ->
                     currentState.copy(
-                        message = "Press the ${_gameState.value.numberGenerated}",
+                        message = Message.SpecialMessage
                     )
                 }
             }
@@ -68,73 +68,46 @@ class TestProgViewModel : ViewModel() {
         updateTimeStates()
     }
 
+    private fun buttonNumberForFirstGame (number: Int) {
+        if (_gameState.value.previouslyClick == number-1) {
+            _gameState.update { currentState ->
+                currentState.copy(
+                    previouslyClick = number,
+                    message = when (number) {
+                        1 -> Message.ButtonOnePressed
+                        2 -> Message.ButtonTwoPressed
+                        3 -> Message.ButtonThreePressed
+                        else -> Message.Error
+                    },
+                    numberOfError = when (number) {
+                        3 -> 0
+                        else -> _gameState.value.numberOfError + 0
+                    },
+                    isFirstGameCompleted = when (number) {
+                        3 -> true
+                        else -> false
+                    }
+                )
+            }
+            when (number) {
+                3 -> countdown(UseCase().generateRandomNumber(5,6))
+            }
+        } else {
+            _gameState.update { currentState ->
+                currentState.copy(
+                    numberOfError = _gameState.value.numberOfError + 1,
+                    message = Message.Error,
+                )
+            }
+            if(_gameState.value.numberOfError == 3) {
+                clickStartStopButton(STOP)
+            }
+        }
+    }
+
     fun clickButtonNumber(number: Int) {
         if (_gameState.value.isStarted && !_gameState.value.isFirstGameCompleted) {
-            when (number) {
-                1 -> {
-                    if (_gameState.value.previouslyClick == 0) {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                previouslyClick = 1,
-                                message = "Great 1/3",
-                            )
-                        }
-                    } else {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                numberOfError = _gameState.value.numberOfError + 1,
-                                message = "Error, after three errors, game end",
-                            )
-                        }
-                        if(_gameState.value.numberOfError == 3) {
-                            clickStartStopButton("Stop")
-                        }
-                    }
-                }
-
-                2 -> {
-                    if (_gameState.value.previouslyClick == 1) {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                previouslyClick = 2,
-                                message = "Great 2/3",
-                            )
-                        }
-                    } else {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                numberOfError = _gameState.value.numberOfError + 1,
-                                message = "Error, after three errors, game end",
-                            )
-                        }
-                        if(_gameState.value.numberOfError == 3) {
-                            clickStartStopButton("Stop")
-                        }
-                    }
-                }
-
-                3 -> {
-                    if (_gameState.value.previouslyClick == 2) {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                isFirstGameCompleted = true,
-                                message = "Great 3/3, New Game Begin",
-                            )
-                        }
-                        countdown(UseCase.generateRandomNumberForCountdown())
-                    } else {
-                        _gameState.update { currentState ->
-                            currentState.copy(
-                                numberOfError = _gameState.value.numberOfError + 1,
-                                message = "Error, after three errors, game end",
-                            )
-                        }
-                        if(_gameState.value.numberOfError == 3) {
-                            clickStartStopButton("Stop")
-                        }
-                    }
-                }
-            }
+            buttonNumberForFirstGame(number)
         } else if (_gameState.value.isStarted && _gameState.value.isFirstGameCompleted) {
             if (_gameState.value.numberGenerated == number) {
                 _gameState.update { currentState ->
@@ -144,25 +117,25 @@ class TestProgViewModel : ViewModel() {
                         previouslyClick = 0,
                         numberOfError = 0,
                         numberGenerated = 0,
-                        message = "Well Played !",
+                        message = Message.WellPlayed,
                     )
                 }
             } else {
                 _gameState.update { currentState ->
                     currentState.copy(
                         numberOfError = _gameState.value.numberOfError + 1,
-                        message = "Error, after three errors, game end",
+                        message = Message.Error,
                     )
                 }
                 if(_gameState.value.numberOfError == 3) {
-                    clickStartStopButton("Stop")
+                    clickStartStopButton(STOP)
                 }
             }
         }
     }
 
     fun clickStartStopButton(name: String) {
-        if (name == "Stop") {
+        if (name == STOP) {
             stop()
             _gameState.update { currentState ->
                 currentState.copy(
@@ -171,10 +144,10 @@ class TestProgViewModel : ViewModel() {
                     previouslyClick = 0,
                     numberOfError = 0,
                     numberGenerated = 0,
-                    message = "Click Start",
+                    message = Message.StopPressed,
                 )
             }
-        } else if (name == "Start") {
+        } else if (name == START) {
             _gameState.update { currentState ->
                 currentState.copy(
                     isStarted = true,
@@ -182,12 +155,22 @@ class TestProgViewModel : ViewModel() {
                     previouslyClick = 0,
                     numberOfError = 0,
                     numberGenerated = 0,
-                    message = "Click numbers in the correct order, 1 > 2 > 3",
+                    message = Message.StartPressed,
                 )
             }
         }
     }
 
+    enum class Message{
+        StartPressed,
+        StopPressed,
+        ButtonOnePressed,
+        ButtonTwoPressed,
+        ButtonThreePressed,
+        Error,
+        WellPlayed,
+        SpecialMessage,
+    }
 
     data class GameState(
         var isStarted: Boolean = false,
@@ -195,6 +178,11 @@ class TestProgViewModel : ViewModel() {
         var previouslyClick: Int = 0,
         var numberOfError: Int = 0,
         var numberGenerated: Int = 0,
-        var message: String = "Click Start",
+        var message: Message = Message.StopPressed,
     )
+
+    companion object {
+        private const val START = "Start"
+        private const val STOP = "Stop"
+    }
 }
